@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Blog {
+  id            String      @id @default(uuid())
+  title         String  
+  coverImage    String?
+  description   String? 
+  viewCount     Int         @default(0)
+  readTime      Int?
+  content       Content[]
+  tags          BlogTag[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum ContentType {
+  TEXT 
+  IMAGES
+  VIDEOS
+}
+
+model Content {
+  id              String      @id @default(uuid())
+  type            ContentType
+  order           Int         
+  title           String?
+  description     String?     
+  images          ContentImage[]
+  videos          ContentVideo[]
+    
+  blogId          String
+  blog            Blog        @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([blogId, order])
+}
+
+model ContentImage {
+  id              String      @id @default(uuid())
+  url             String
+  altText         String?
+  caption         String?
+  order           Int         @default(0)
+  
+  contentId       String
+  content         Content     @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([contentId, order])
+}
+
+model ContentVideo {
+  id              String      @id @default(uuid())
+  url             String
+  thumbnailUrl    String?
+  title           String?
+  duration        Int?        
+  order           Int         @default(0)
+  
+  contentId       String
+  content         Content     @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([contentId, order])
+}
+
+
+model Tag {
+  name          String      @unique
+  createdAt     DateTime    @default(now())
+  blogs         BlogTag[]
+}
+
+model BlogTag {
+  blogId        String      
+  tagName       String
+  blog          Blog        @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagName], references: [name], onDelete: Cascade)
+
+  @@id([blogId, tagName])
+}
